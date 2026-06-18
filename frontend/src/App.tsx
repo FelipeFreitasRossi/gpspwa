@@ -1,122 +1,111 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { useState, useEffect } from 'react';
+import OnboardingScreen from './components/OnboardingScreen';
+import SplashScreen from './components/SplashScreen';
+import Header from './components/Header';
+import BottomBar from './components/BottomBar';
+import MapView from './components/Map';
+import SearchBar from './components/SearchBar';
+import RoutePanel from './components/RoutePanel';
+import DashboardStats from './components/DashboardStats';
+import LoadingOverlay from './components/Loadingoverlay';
+import { useMapStore } from './store/mapStore';
 
-function App() {
-  const [count, setCount] = useState(0)
+export default function App() {
+  const [showOnboarding, setShowOnboarding] = useState(true);
+  const [showSplash, setShowSplash] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const error = useMapStore((state) => state.error);
+  const setError = useMapStore((state) => state.setError);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIsLoading(false), 1500);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const handleOnboardingComplete = () => {
+    setShowOnboarding(false);
+    setShowSplash(true);
+  };
+
+  const handleSplashComplete = () => {
+    setShowSplash(false);
+  };
+
+  const toggleSidebar = () => {
+    setIsSidebarOpen((prev) => !prev);
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (isSidebarOpen && !target.closest('.sidebar-panel') && !target.closest('.hamburger-button')) {
+        setIsSidebarOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isSidebarOpen]);
+
+  if (showOnboarding) {
+    return <OnboardingScreen onComplete={handleOnboardingComplete} />;
+  }
+
+  if (showSplash) {
+    return <SplashScreen onFinish={handleSplashComplete} />;
+  }
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
+    <div className="relative flex h-screen w-screen flex-col bg-void font-body">
+      <LoadingOverlay loading={isLoading} />
+
+      <Header isSidebarOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
+
+      <div className="relative flex flex-1 overflow-hidden pt-[64px] pb-[88px]">
+        {isSidebarOpen && (
+          <div
+            className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm md:hidden"
+            onClick={() => setIsSidebarOpen(false)}
+          />
+        )}
+
+        <aside
+          className={`
+            sidebar-panel fixed left-0 top-0 z-50 h-full w-[85vw] max-w-[420px] 
+            overflow-y-auto bg-void/95 p-4 backdrop-blur-xl transition-transform duration-300 ease-in-out
+            md:relative md:top-auto md:z-20 md:w-[420px] md:translate-x-0 md:bg-void/80 md:p-5
+            ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+          `}
         >
-          Count is {count}
-        </button>
-      </section>
+          <div className="space-y-4 pb-20">
+            <SearchBar />
+            <RoutePanel />
+            <DashboardStats />
+          </div>
+        </aside>
 
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
+        <div className="flex-1 overflow-hidden md:rounded-l-2xl md:border-l md:border-white/5 p-1">
+          <MapView />
         </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+      </div>
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+      {error && (
+        <div className="fixed inset-x-4 bottom-24 z-40 flex items-center justify-between gap-3 rounded-xl bg-red-500/20 px-4 py-3 text-sm text-red-100 backdrop-blur-md shadow-lg">
+          <span className="flex items-center gap-2">
+            <span className="h-2 w-2 rounded-full bg-red-400 animate-pulse" />
+            {error}
+          </span>
+          <button
+            type="button"
+            onClick={() => setError(null)}
+            className="rounded-full bg-red-500/20 p-1 hover:bg-red-500/30 transition"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
+      <BottomBar />
+    </div>
+  );
 }
-
-export default App
